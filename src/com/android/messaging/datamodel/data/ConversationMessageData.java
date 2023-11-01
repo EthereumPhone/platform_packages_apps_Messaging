@@ -21,6 +21,8 @@ import android.provider.BaseColumns;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.content.ContentResolver;
+import android.content.Context;
 
 import com.android.messaging.datamodel.DatabaseHelper;
 import com.android.messaging.datamodel.DatabaseHelper.MessageColumns;
@@ -75,6 +77,7 @@ public class ConversationMessageData {
     private long mSenderContactId;
     private String mSenderContactLookupKey;
     private String mSelfParticipantId;
+    private String mEthAddress;
 
     /** Are we similar enough to the previous/next messages that we can cluster them? */
     private boolean mCanClusterWithPreviousMessage;
@@ -83,7 +86,36 @@ public class ConversationMessageData {
     public ConversationMessageData() {
     }
 
-    public void bind(final Cursor cursor) {
+
+    public String getContactData15(Context context, String firstName) {
+        ContentResolver contentResolver = context.getContentResolver();
+        String[] projection = {ContactsContract.Data.DATA15};
+
+        String selection = ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + "=? ";
+        String[] selectionArgs = {firstName};
+
+        Cursor cursor = contentResolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                null
+        );
+
+        String data15 = null;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                int data15Index = cursor.getColumnIndex(ContactsContract.Data.DATA15);
+                data15 = cursor.getString(data15Index);
+            }
+            cursor.close();
+        }
+
+        return data15;
+    }
+
+
+    public void bind(final Cursor cursor, final Context context) {
         mMessageId = cursor.getString(INDEX_MESSAGE_ID);
         mConversationId = cursor.getString(INDEX_CONVERSATION_ID);
         mParticipantId = cursor.getString(INDEX_PARTICIPANT_ID);
@@ -119,6 +151,19 @@ public class ConversationMessageData {
         mSenderContactId = cursor.getLong(INDEX_SENDER_CONTACT_ID);
         mSenderContactLookupKey = cursor.getString(INDEX_SENDER_CONTACT_LOOKUP_KEY);
         mSelfParticipantId = cursor.getString(INDEX_SELF_PARTICIPIANT_ID);
+
+        String ethAddress = null;
+        try {
+            ethAddress = getContactData15(context, mSenderFullName);
+        } catch (Exception e) {
+            
+        }
+        System.out.println("ethAddress: " + ethAddress);
+        if (ethAddress != null) {
+            mEthAddress = ethAddress;
+        } else {
+            mEthAddress = "";
+        }
 
         if (!cursor.isFirst() && cursor.moveToPrevious()) {
             mCanClusterWithPreviousMessage = canClusterWithMessage(cursor);
@@ -515,6 +560,10 @@ public class ConversationMessageData {
 
     public boolean getIsIncoming() {
         return (mStatus >= MessageData.BUGLE_STATUS_FIRST_INCOMING);
+    }
+
+    public String getEthAddress() {
+        return mEthAddress;
     }
 
     public boolean hasIncomingErrorStatus() {

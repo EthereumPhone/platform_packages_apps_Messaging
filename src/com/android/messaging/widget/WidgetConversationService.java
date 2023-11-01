@@ -74,8 +74,12 @@ public class WidgetConversationService extends RemoteViewsService {
         private ImageResource mImageResource;
         private String mConversationId;
 
+        private final Context mContext;
+
         public WidgetConversationFactory(Context context, Intent intent) {
             super(context, intent);
+
+            mContext = context;
 
             mConversationId = intent.getStringExtra(UIIntents.UI_INTENT_EXTRA_CONVERSATION_ID);
             if (LogUtil.isLoggable(TAG, LogUtil.VERBOSE)) {
@@ -138,7 +142,7 @@ public class WidgetConversationService extends RemoteViewsService {
                 }
 
                 final ConversationMessageData message = new ConversationMessageData();
-                message.bind(mCursor);
+                message.bind(mCursor, mContext);
 
                 // Inflate and fill out the remote view
                 final RemoteViews remoteViews = new RemoteViews(

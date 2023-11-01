@@ -63,6 +63,14 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.ContactsContract;
+import android.util.Log;
 
 import com.android.messaging.R;
 import com.android.messaging.datamodel.DataModel;
@@ -84,6 +92,7 @@ import com.android.messaging.datamodel.data.SubscriptionListData.SubscriptionLis
 import com.android.messaging.ui.AttachmentPreview;
 import com.android.messaging.ui.BugleActionBarActivity;
 import com.android.messaging.ui.ConversationDrawables;
+import com.android.messaging.ui.PlainTextEditText;
 import com.android.messaging.ui.SnackBar;
 import com.android.messaging.ui.UIIntents;
 import com.android.messaging.ui.animation.PopupTransitionAnimation;
@@ -106,6 +115,9 @@ import com.android.messaging.util.TextUtil;
 import com.android.messaging.util.UiUtils;
 import com.android.messaging.util.UriUtil;
 import com.google.common.annotations.VisibleForTesting;
+import android.provider.ContactsContract.Data;
+import com.android.messaging.datamodel.WalletSDK;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -507,6 +519,8 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
     public View onCreateView(final LayoutInflater inflater, final ViewGroup container,
             final Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.conversation_fragment, container, false);
+        mComposeMessageView = (ComposeMessageView)
+                view.findViewById(R.id.message_compose_view_container);
         mRecyclerView = (RecyclerView) view.findViewById(android.R.id.list);
         final LinearLayoutManager manager = new LinearLayoutManager(getActivity());
         manager.setStackFromEnd(true);
@@ -610,8 +624,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
                 UiUtils.isRtlMode() ? ConversationFastScroller.POSITION_LEFT_SIDE :
                     ConversationFastScroller.POSITION_RIGHT_SIDE);
 
-        mComposeMessageView = (ComposeMessageView)
-                view.findViewById(R.id.message_compose_view_container);
+        
         // Bind the compose message view to the DraftMessageData
         mComposeMessageView.bind(DataModel.get().createDraftMessageData(
                 mBinding.getData().getConversationId()), this);
@@ -734,6 +747,106 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         }
     }
 
+    public String getEthAddressByNumber(Context context, String number) {
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
+        String name = "?";
+
+        ContentResolver contentResolver = context.getContentResolver();
+        Cursor contactLookup = contentResolver.query(uri, new String[] {ContactsContract.PhoneLookup.CONTACT_ID,
+                ContactsContract.PhoneLookup.DISPLAY_NAME }, null, null, null);
+
+        try {
+            if (contactLookup != null && contactLookup.getCount() > 0) {
+                contactLookup.moveToNext();
+                int ind = contactLookup.getColumnIndex(ContactsContract.Data.DISPLAY_NAME);
+                if (ind > -1) {
+                    name = contactLookup.getString(ind);
+                }
+                int idIdx = contactLookup.getColumnIndexOrThrow(ContactsContract.PhoneLookup.CONTACT_ID);
+                String contactId = contactLookup.getString(idIdx);
+                return getContactData15(context, contactId);
+            }
+        } finally {
+            if (contactLookup != null) {
+                contactLookup.close();
+            }
+        }
+
+        return name;
+    }
+
+    public String getContactData15(Context context, String baseId) {
+        ContentResolver contentResolver = context.getContentResolver();
+        String[] projection = {
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
+                ContactsContract.Data.DATA15,
+                ContactsContract.PhoneLookup.CONTACT_ID,
+        };
+
+        String selection = ContactsContract.PhoneLookup.CONTACT_ID + "=? ";
+        String[] selectionArgs = {baseId};
+
+        Cursor cursor = contentResolver.query(
+                ContactsContract.Data.CONTENT_URI,
+                projection,
+                selection,
+                selectionArgs,
+                null
+        );
+        String output = null;
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                int index = cursor.getColumnIndex(ContactsContract.Data.DATA15);
+                output = cursor.getString(index);
+            }
+            cursor.close();
+        }
+        return output;
+    }
+
+    public String getDisplayNameForPhoneNumber(Context context, String phoneNumber) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+
+        String[] projection = {Data.DISPLAY_NAME};
+
+        Cursor cursor = contentResolver.query(uri, projection, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int displayNameIndex = cursor.getColumnIndex(Data.DISPLAY_NAME);
+            String displayName = cursor.getString(displayNameIndex);
+            cursor.close();
+            return displayName;
+        } else {
+            return null; // Contact not found
+        }
+    }
+
+    public String getData15ForDisplayName(Context context, String displayName) {
+        ContentResolver contentResolver = context.getContentResolver();
+
+        // Query the ContactsContract.Data table to find the DATA15 field associated with the display name
+        Uri dataUri = Data.CONTENT_URI;
+        String[] projection = {Data.DATA15};
+        String selection = Data.DISPLAY_NAME_PRIMARY + "=?";
+        String[] selectionArgs = {displayName};
+        if (displayName == null) {
+            return null;
+        }
+
+        Cursor cursor = contentResolver.query(dataUri, projection, selection, selectionArgs, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int data15Index = cursor.getColumnIndex(Data.DATA15);
+            String data15Value = cursor.getString(data15Index);
+            cursor.close();
+            return data15Value;
+        } else {
+            return null; // Display name not found or no DATA15 field
+        }
+    }
+
     @Override
     public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
         if (mHost.getActionMode() != null) {
@@ -743,6 +856,22 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         inflater.inflate(R.menu.conversation_menu, menu);
 
         final ConversationData data = mBinding.getData();
+
+        String phoneNum = data.getParticipantPhoneNumber();
+        if (phoneNum != null) {
+            phoneNum = phoneNum.replace(" ", "");
+        }
+
+        String displayName = getDisplayNameForPhoneNumber(getActivity(), phoneNum);
+
+        System.out.println("ETH_MESS PHONE NUM: "+phoneNum);
+
+        String ethAddress = "";
+        if (phoneNum != null && phoneNum.length() > 0) {
+            ethAddress = getData15ForDisplayName(getActivity(), displayName);
+        }
+
+        System.out.println("ETH_MESS Addr: "+ethAddress);
 
         // Disable the "people & options" item if we haven't loaded participants yet.
         menu.findItem(R.id.action_people_and_options).setEnabled(data.getParticipantsLoaded());
@@ -758,10 +887,29 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         menu.findItem(R.id.action_archive).setVisible(!isArchived);
         menu.findItem(R.id.action_unarchive).setVisible(isArchived);
 
+        MenuItem sendEthMenuItem = menu.findItem(R.id.action_send_eth);
+        if ((ethAddress != null && ethAddress.length() > 0)) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            if (!prefs.contains(data.getConversationId()+"eth_address")) {
+                prefs.edit().putString(data.getConversationId()+"eth_address", checkIfENS(ethAddress)).apply();
+            }
+            sendEthMenuItem.setVisible(true);
+            sendEthMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        }
         // Conditionally enable the phone call button.
         final boolean supportCallAction = (PhoneUtils.getDefault().isVoiceCapable() &&
                 data.getParticipantPhoneNumber() != null);
         menu.findItem(R.id.action_call).setVisible(supportCallAction);
+    }
+
+    private String checkIfENS(String address) {
+        if (address.endsWith(".eth")) {
+            try {
+                WalletSDK walletSDK = new WalletSDK(getActivity(), "https://eth-mainnet.g.alchemy.com/v2/7VRG5CtXPdmq6p65GXf2uz6g_8Xb2oPz");
+                return walletSDK.resolveENS(address);
+            } catch(Exception e) { /* Ignore */}
+        }
+        return address;
     }
 
     @Override
@@ -801,6 +949,32 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
             case R.id.action_archive:
                 mBinding.getData().archiveConversation(mBinding);
                 closeConversation(mConversationId);
+                return true;
+
+            case R.id.action_send_eth:
+                final ConversationData data = mBinding.getData();
+
+                String phoneNum = data.getParticipantPhoneNumber();
+                if (phoneNum != null) {
+                    phoneNum = phoneNum.replace(" ", "");
+                }
+
+                String displayName = getDisplayNameForPhoneNumber(getActivity(), phoneNum);
+
+                System.out.println("ETH_MESS PHONE NUM: "+phoneNum);
+
+                String ethAddress = "";
+                if (phoneNum != null && phoneNum.length() > 0) {
+                    ethAddress = getData15ForDisplayName(getActivity(), displayName);
+                }
+
+                System.out.println("ETH_MESS Addr: "+ethAddress);
+                if (ethAddress != null) {
+                    String deepLinkUriString = "app://wallet_manager/send_deep_link/"+ethAddress;
+                    Uri deepLinkUri = Uri.parse(deepLinkUriString);
+                    Intent intent = new Intent(Intent.ACTION_VIEW, deepLinkUri);
+		             startActivity(intent);
+                }
                 return true;
 
             case R.id.action_unarchive:
@@ -1486,7 +1660,8 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
 
     @Override
     public MediaPicker createMediaPicker() {
-        return new MediaPicker(getActivity());
+        return new MediaPicker(getActivity(), (PlainTextEditText) getView().findViewById(
+                R.id.compose_message_text));
     }
 
     @Override

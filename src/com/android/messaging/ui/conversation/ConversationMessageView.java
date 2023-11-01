@@ -245,7 +245,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
         mOneOnOne = oneOnOne;
 
         // Update our UI model
-        mData.bind(cursor);
+        mData.bind(cursor, getContext());
         setSelected(TextUtils.equals(mData.getMessageId(), selectedMessageId));
 
         // Update text and image content for the view.
@@ -701,7 +701,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
                         isSelected(),
                         incoming,
                         false /* needArrow */,
-                        mData.hasIncomingErrorStatus());
+                        mData.hasIncomingErrorStatus(),
+                        mData.getEthAddress() != "");
                 textMinHeight = messageTextMinHeightDefault;
                 textTopMargin = messageTopPaddingClustered;
                 textTopPadding = textTopPaddingDefault;
@@ -729,7 +730,8 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
                     isSelected(),
                     incoming,
                     shouldShowMessageBubbleArrow(),
-                    mData.hasIncomingErrorStatus());
+                    mData.hasIncomingErrorStatus(),
+                    mData.getEthAddress() != "");
             textMinHeight = messageTextMinHeightDefault;
             textTopMargin = 0;
             textTopPadding = textTopPaddingDefault;
@@ -1121,7 +1123,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
             audioView.bindMessagePartData(attachment, mData.getIsIncoming(), isSelected());
             audioView.setBackground(ConversationDrawables.get().getBubbleDrawable(
                     isSelected(), mData.getIsIncoming(), false /* needArrow */,
-                    mData.hasIncomingErrorStatus()));
+                    mData.hasIncomingErrorStatus(), mData.getEthAddress() != ""));
         }
 
         @Override
@@ -1138,7 +1140,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
                     attachment));
             personView.setBackground(ConversationDrawables.get().getBubbleDrawable(
                     isSelected(), mData.getIsIncoming(), false /* needArrow */,
-                    mData.hasIncomingErrorStatus()));
+                    mData.hasIncomingErrorStatus(), mData.getEthAddress() != ""));
             final int nameTextColorRes;
             final int detailsTextColorRes;
             if (isSelected()) {

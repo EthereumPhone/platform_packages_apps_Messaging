@@ -3,49 +3,45 @@
     android:height="108dp"
     android:viewportWidth="512"
     android:viewportHeight="512">
-  <group android:scaleX="0.71"
-      android:scaleY="0.71"
-      android:translateX="74.24"
-      android:translateY="74.24">
+  <group android:scaleX="0.67"
+      android:scaleY="0.67"
+      android:translateX="84.48"
+      android:translateY="84.48">
     <path
         android:pathData="M0,0L512,0L512,512L0,512L0,0Z"
         android:fillColor="#ffffff"
         android:fillType="nonZero"
         android:strokeColor="#00000000"/>
     <path
-        android:pathData="M138.63,138.62L373.38,138.62L373.38,373.38L138.63,373.38L138.63,138.62Z"
-        android:strokeAlpha="0"
-        android:strokeLineJoin="round"
-        android:strokeWidth="0.5"
-        android:fillColor="#00000000"
-        android:strokeColor="#24303d"
-        android:fillAlpha="0"
-        android:strokeLineCap="butt"/>
+        android:pathData="M0,0L512,0L512,512L0,512L0,0Z"
+        android:fillColor="#ffffff"
+        android:fillType="nonZero"
+        android:strokeColor="#00000000"/>
     <path
-        android:pathData="M142.66,356.61L142.66,142.39L369.34,142.39L369.34,302.02L190.39,302.61L142.66,356.61Z"
+        android:pathData="M139.98,373.37L139.25,138.77L373.16,138.63L373.67,302.43L188.34,303.02L139.98,373.37Z"
         android:strokeLineJoin="miter"
-        android:strokeWidth="16"
+        android:strokeWidth="6"
         android:fillColor="#00000000"
         android:strokeColor="#24303d"
         android:strokeLineCap="butt"/>
     <path
-        android:pathData="M186,182.97L326,182.97"
+        android:pathData="M176.45,182.97L336.33,182.97"
         android:strokeLineJoin="miter"
-        android:strokeWidth="15"
+        android:strokeWidth="6"
         android:fillColor="#00000000"
         android:strokeColor="#24303d"
         android:strokeLineCap="butt"/>
     <path
-        android:pathData="M186,257.97L326,257.97"
+        android:pathData="M176.45,258.75L336.33,258.75"
         android:strokeLineJoin="miter"
-        android:strokeWidth="15"
+        android:strokeWidth="6"
         android:fillColor="#00000000"
         android:strokeColor="#24303d"
         android:strokeLineCap="butt"/>
     <path
-        android:pathData="M210.95,220.47L301.05,220.47"
+        android:pathData="M204.95,220.86L307.84,220.86"
         android:strokeLineJoin="miter"
-        android:strokeWidth="15"
+        android:strokeWidth="6"
         android:fillColor="#00000000"
         android:strokeColor="#24303d"
         android:strokeLineCap="butt"/>

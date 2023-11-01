@@ -151,7 +151,8 @@ public class ContactUtil {
             Profile._ID,                        // 0
             Profile.DISPLAY_NAME_PRIMARY,       // 1
             Profile.PHOTO_THUMBNAIL_URI,        // 2
-            Profile.LOOKUP_KEY                  // 3
+            Profile.LOOKUP_KEY,                 // 3
+            ContactsContract.Data.DATA15
             // Phone number, type, label and data_id is not provided in this projection since
             // Profile CONTENT_URI doesn't include this information. Also, we don't need it
             // we just need the name and avatar url.
