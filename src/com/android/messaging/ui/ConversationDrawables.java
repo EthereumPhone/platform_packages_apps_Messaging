@@ -48,6 +48,7 @@ public class ConversationDrawables {
     private Drawable mFastScrollPreviewDrawableRight;
     private final Context mContext;
     private int mOutgoingBubbleColor;
+    private int greenIncomingColor;
     private int mIncomingErrorBubbleColor;
     private int mIncomingAudioButtonColor;
     private int mSelectedBubbleColor;
@@ -102,10 +103,11 @@ public class ConversationDrawables {
                 resources.getColor(R.color.message_audio_button_color_incoming);
         mSelectedBubbleColor = resources.getColor(R.color.message_bubble_color_selected);
         mThemeColor = resources.getColor(R.color.primary_color);
+        greenIncomingColor = resources.getColor(R.color.green_incoming_color);
     }
 
     public Drawable getBubbleDrawable(final boolean selected, final boolean incoming,
-            final boolean needArrow, final boolean isError) {
+            final boolean needArrow, final boolean isError, final boolean hasEthAddress) {
         final Drawable protoDrawable;
         if (needArrow) {
             if (incoming) {
@@ -127,7 +129,13 @@ public class ConversationDrawables {
             if (isError) {
                 color = mIncomingErrorBubbleColor;
             } else {
-                color = mThemeColor;
+                // Check if contact has eth-address saved alongside phone number
+                // if so, use theme color for incoming bubbles
+                if (hasEthAddress) {
+                    color = mThemeColor;
+                } else {
+                    color = greenIncomingColor;
+                }
             }
         } else {
             color = mOutgoingBubbleColor;

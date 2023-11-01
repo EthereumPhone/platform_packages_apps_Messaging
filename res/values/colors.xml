@@ -15,13 +15,13 @@
     limitations under the License.
 -->
 <resources>
-    <color name="primary_color">#689F38</color>
+    <color name="primary_color">#5550F2</color>
     <color name="permission_check_activity_background">@color/primary_color</color>
 
     <!--  Action bar -->
     <color name="action_bar_title_text_color">#ffffff</color>
     <color name="action_bar_background_color">@color/primary_color</color>
-    <color name="action_bar_background_color_dark">#537F2D</color>
+    <color name="action_bar_background_color_dark">#9980ff</color>
     <color name="contextual_action_bar_background_color">#ffffff</color>
     <color name="archived_conversation_action_bar_background_color">#9D9D9D</color>
     <color name="archived_conversation_action_bar_background_color_dark">#838383</color>
@@ -68,6 +68,7 @@
     <color name="message_error_bubble_color_incoming">#e2e2e2</color>
     <color name="message_audio_button_color_incoming">#ffffffff</color>
     <color name="message_bubble_color_selected">#8BC34A</color>
+    <color name="green_incoming_color">#689F38</color>
     <color name="message_image_selected_tint">#80689F38</color>
     <color name="generic_video_icon">#ff808080</color>
 

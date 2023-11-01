@@ -47,10 +47,12 @@ import com.android.messaging.datamodel.data.PendingAttachmentData;
 import com.android.messaging.datamodel.data.DraftMessageData.DraftMessageSubscriptionDataProvider;
 import com.android.messaging.ui.BugleActionBarActivity;
 import com.android.messaging.ui.FixedViewPagerAdapter;
+import com.android.messaging.ui.PlainTextEditText;
 import com.android.messaging.util.AccessibilityUtil;
 import com.android.messaging.util.Assert;
 import com.android.messaging.util.UiUtils;
 import com.google.common.annotations.VisibleForTesting;
+import com.android.messaging.ui.conversation.ComposeMessageView;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -163,11 +165,13 @@ public class MediaPicker extends Fragment implements DraftMessageSubscriptionDat
     /** Provides access to DraftMessageData associated with the current conversation */
     private ImmutableBindingRef<DraftMessageData> mDraftMessageDataModel;
 
+    /*
     public MediaPicker() {
         this(Factory.get().getApplicationContext());
     }
+    */
 
-    public MediaPicker(final Context context) {
+    public MediaPicker(final Context context, PlainTextEditText inputField) {
         mBinding.bind(DataModel.get().createMediaPickerData(context));
         mEnabledChoosers = new ArrayList<MediaChooser>();
         mChoosers = new MediaChooser[] {
@@ -175,6 +179,7 @@ public class MediaPicker extends Fragment implements DraftMessageSubscriptionDat
             new GalleryMediaChooser(this),
             new AudioMediaChooser(this),
             new ContactMediaChooser(this),
+            new EthAddressMediaChooser(this, inputField),
         };
 
         mOpen = false;
@@ -217,6 +222,7 @@ public class MediaPicker extends Fragment implements DraftMessageSubscriptionDat
             chooser.onCreateTabButton(inflater, mTabStrip);
             final boolean enabled = (chooser.getSupportedMediaTypes() & mSupportedMediaTypes) !=
                     MEDIA_TYPE_NONE;
+            System.out.println("ETHADDRTEST: "+ enabled + ": " + chooser.toString());
             final ImageButton tabButton = chooser.getTabButton();
             if (tabButton != null) {
                 tabButton.setVisibility(enabled ? View.VISIBLE : View.GONE);

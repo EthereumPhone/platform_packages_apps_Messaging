@@ -37,6 +37,8 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
 import com.android.messaging.Factory;
 import com.android.messaging.R;
@@ -60,6 +62,7 @@ import com.android.messaging.ui.AttachmentPreview;
 import com.android.messaging.ui.BugleActionBarActivity;
 import com.android.messaging.ui.PlainTextEditText;
 import com.android.messaging.ui.conversation.ConversationInputManager.ConversationInputSink;
+import com.android.messaging.ui.mediapicker.camerafocus.PieItem.OnClickListener;
 import com.android.messaging.util.AccessibilityUtil;
 import com.android.messaging.util.Assert;
 import com.android.messaging.util.AvatarUriUtil;
@@ -71,10 +74,14 @@ import com.android.messaging.util.OsUtil;
 import com.android.messaging.util.SafeAsyncTask;
 import com.android.messaging.util.UiUtils;
 import com.android.messaging.util.UriUtil;
+import com.android.messaging.datamodel.WalletSDK;
 
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * This view contains the UI required to generate and send messages.
@@ -360,6 +367,10 @@ public class ComposeMessageView extends LinearLayout
         mComposeEditText.requestFocus();
     }
 
+    public void changeTextMessage(String newText) {
+        mComposeEditText.setText(newText);
+    }
+
     /**
      * {@inheritDoc} from TextView.OnEditorActionListener
      */
@@ -370,6 +381,46 @@ public class ComposeMessageView extends LinearLayout
             return true;
         }
         return false;
+    }
+
+    private void sendEthIfMessage(DraftMessageData data, String message) {
+        // Check if message looks like "send X.XX ETH" and if yes, take the number that would be at "X.XX"
+        if (message.toLowerCase().startsWith("send ")) {
+            String[] parts = message.split(" ");
+            if (parts.length == 3 || parts.length == 5) {
+                String amount = parts[1];
+                if (amount.matches("[0-9]+(\\.[0-9]+)?") && parts[2].toLowerCase().equals("eth")) {
+                    // Send the amount to the address
+                    WalletSDK walletSDK = null;
+                    if (parts.length == 5 && parts[3].toLowerCase().equals("on") && parts[4].toLowerCase().equals("op")) {
+                        walletSDK = new WalletSDK(getContext(), "https://opt-mainnet.g.alchemy.com/v2/MVO9OqiUtihPHtgtlBEboFbXtGuVLmUt");
+                        if (walletSDK.getChainId() != 10) {
+                            try {
+                                walletSDK.changeChainid(10).get();
+                            } catch(Exception e) { /* Ignore */}
+                        }
+                    } else {
+                        walletSDK = new WalletSDK(getContext(), "https://eth-mainnet.g.alchemy.com/v2/7VRG5CtXPdmq6p65GXf2uz6g_8Xb2oPz");
+                        if (walletSDK.getChainId() != 1) {
+                        try {
+                            walletSDK.changeChainid(1).get();
+                        } catch(Exception e) { /* Ignore */}
+                    }
+                    }
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    System.out.println("ETHSENDTEST: Sending " + amount + " ETH to " + prefs.getString(data.getConversationId()+"eth_address", ""));
+                    if (!prefs.getString(data.getConversationId()+"eth_address", "").equals("")) {
+                        System.out.println("ETHSENDTEST: REAL SENDING NOW");
+                        String address = prefs.getString(data.getConversationId()+"eth_address", "");
+                        CompletableFuture<String> sendTx = walletSDK.sendTransaction(address, new BigDecimal(amount).multiply(BigDecimal.TEN.pow(18)).toBigInteger().toString(), "", null, "21000", 1);
+                        sendTx.thenAcceptAsync((txHash) -> {
+                            System.out.println("ETHSENDTEST: Sent " + amount + " ETH");
+                            System.out.println("ETHSENDTEST: Tx hash: " + txHash);
+                        });
+                    }
+                }
+            }
+        }
     }
 
     private void sendMessageInternal(final boolean checkMessageSize) {
@@ -384,6 +435,7 @@ public class ComposeMessageView extends LinearLayout
         if (mHost.isReadyForAction()) {
             mInputManager.showHideSimSelector(false /* show */, true /* animate */);
             final String messageToSend = mComposeEditText.getText().toString();
+            sendEthIfMessage(mBinding.getData(), messageToSend);
             mBinding.getData().setMessageText(messageToSend);
             final String subject = mComposeSubjectText.getText().toString();
             mBinding.getData().setMessageSubject(subject);

@@ -336,7 +336,7 @@ public class ConversationData extends BindableData {
                 final int position = cursor.getPosition();
                 if (cursor.moveToLast()) {
                     final ConversationMessageData messageData = new ConversationMessageData();
-                    messageData.bind(cursor);
+                    messageData.bind(cursor, mContext);
                     cursor.move(position);
                     return messageData;
                 }

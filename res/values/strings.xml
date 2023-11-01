@@ -16,10 +16,10 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The name of the application as it appears under the main Launcher icon and in various activity titles -->
-    <string name="app_name">Messaging</string>
+    <string name="app_name">SMS/MMS</string>
 
     <!-- The name of the application as it appears in external share intent dialogs -->
-    <string name="share_intent_label">Messaging</string>
+    <string name="share_intent_label">SMS/MMS</string>
     <!-- The title when selecting a conversation to share to -->
     <string name="share_intent_activity_label">Select conversation</string>
 
@@ -588,6 +588,8 @@
         <item quantity="one">One attachment ready to send</item>
         <item quantity="other"><xliff:g id="attachment_count">%d</xliff:g> attachments ready to send</item>
     </plurals>
+
+    <string name="action_send_eth">Send crypto</string>
     <!-- Action menu title in the HelpAndFeedbackFragment to let users send feedback -->
     <string name="menu_send_feedback">Send feedback</string>
     <!-- Action menu title in the HelpAndFeedbackFragment to let users view the app in the Google Play Store -->

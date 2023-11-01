@@ -694,7 +694,7 @@ public abstract class MessageNotificationState extends NotificationState {
 
             final HashMap<String, Integer> firstNames = scanFirstNames(conversationId);
             do {
-                convMessageData.bind(convMessageCursor);
+                convMessageData.bind(convMessageCursor, Factory.get().getApplicationContext());
 
                 final String authorFullName = convMessageData.getSenderFullName();
                 final String authorFirstName = convMessageData.getSenderFirstName();
@@ -846,7 +846,7 @@ public abstract class MessageNotificationState extends NotificationState {
                 final int maxMessages = getMaxMessagesInConversationNotification();
 
                 do {
-                    convMessageData.bind(convMessageCursor);
+                    convMessageData.bind(convMessageCursor, Factory.get().getApplicationContext());
 
                     // First figure out if this is a valid message.
                     String authorFullName = convMessageData.getSenderFullName();

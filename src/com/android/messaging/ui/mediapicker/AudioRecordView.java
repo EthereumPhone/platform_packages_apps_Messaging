@@ -333,8 +333,7 @@ public class AudioRecordView extends FrameLayout implements
             final Rect startRect = new Rect();
             mRecordButtonVisual.getGlobalVisibleRect(startRect);
             final MediaPickerMessagePartData audioItem =
-                    new MediaPickerMessagePartData(startRect,
-                            ContentType.AUDIO_3GPP, outputUri, 0, 0);
+                    new MediaPickerMessagePartData(startRect, ContentType.AUDIO_3GPP, outputUri, 0, 0);
             mHostInterface.onAudioRecorded(audioItem);
         }
         playAudioEndSound();

@@ -27,6 +27,20 @@ soong_config_module_type {
     properties: ["optimize"],
 }
 
+java_import {
+    name: "moshi-core",
+    host_supported: true,
+    installable: false,
+    jars: ["jars/moshi-1.13.0.jar"],
+}
+
+java_import {
+    name: "moshi-kotlin-codegen",
+    host_supported: true,
+    installable: false,
+    jars: ["jars/moshi-kotlin-codegen-1.13.0.jar"],
+}
+
 messaging_java_defaults {
     name: "messaging_defaults",
     soong_config_variables: {
@@ -53,7 +67,7 @@ messaging_java_defaults {
 android_app {
     name: "messaging",
 
-    srcs: ["src/**/*.java"],
+    srcs: ["src/**/*.java", "src/**/*.kt"],
 
     defaults: ["messaging_defaults"],
 
@@ -78,6 +92,34 @@ android_app {
         "com.android.vcard",
         "guava",
         "libphonenumber",
+        "web3j-core",
+        "web3j-crypto",
+        "web3j-utils",
+        "web3j-abi",
+        "jackson-databind-2.13.4.2",
+        "jackson-core-android-lib",
+        "jackson-annotations-android-lib",
+        "bcprov-android-lib",
+        "okhttp-android-lib",
+        "kotlin-android-lib",
+        "slf4j-api-android-lib",
+        "okio-android-lib",
+        "okio-jvm-android-lib",
+        "reactive-streams-android-lib",
+        "rxjava-android-lib",
+        "web3j-rlp-android-lib",
+        "okhttp-android-lib",
+        "okio-android-lib",
+        "okio-jvm-android-lib",
+        "khex",
+        "keth-model",
+        "keth-model2",
+        "keth-rpc",
+        "keth-types",
+        "keth-ens",
+        "eip137",
+        "moshi-core",
+        "moshi-kotlin-codegen",
     ],
 
     aaptflags: [

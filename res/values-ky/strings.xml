@@ -17,8 +17,8 @@
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name" msgid="3062916848713424329">"SMS/MMS"</string>
-    <string name="share_intent_label" msgid="6920483598866144717">"SMS/MMS"</string>
+    <string name="app_name" msgid="3062916848713424329">"Messenger"</string>
+    <string name="share_intent_label" msgid="6920483598866144717">"Messenger"</string>
     <string name="share_intent_activity_label" msgid="2939454246983196756">"Маек тандаңыз"</string>
     <string name="action_settings" msgid="1329008122345201684">"Жөндөөлөр"</string>
     <string name="sendButtonContentDescription" msgid="8422114979691093956">"Билдирүү жөнөтүү"</string>
@@ -491,9 +491,9 @@
     <string name="send_button_long_click_description_with_sim_selector" msgid="7670274457707760465">"SIM тандоо же теманы түзөтүү"</string>
     <string name="audio_record_view_content_description" msgid="29401157183728655">"Аудио жаздырыш үчүн кол тийгизип туруңуз"</string>
     <string name="widget_new_conversation_content_description" msgid="4214201569175733579">"Жаңы сүйлөшүү баштоо"</string>
-    <string name="widget_title_content_description" msgid="5802836840910466231">"SMS/MMS"</string>
+    <string name="widget_title_content_description" msgid="5802836840910466231">"Messenger"</string>
     <string name="widget_conversation_list_name" msgid="4005037639000611925">"SMS/MMS тизмеси"</string>
-    <string name="widget_conversation_name" msgid="3900606239571892871">"SMS/MMS"</string>
+    <string name="widget_conversation_name" msgid="3900606239571892871">"Messenger"</string>
     <string name="widget_new_message_content_description" msgid="2706347689522691188">"Жаңы билдирүү"</string>
     <string name="widget_conversation_list_content_description" msgid="4137121313374868821">"Маек тизмеси"</string>
     <string name="loading_conversations" msgid="2890879017729068514">"Сүйлөшүүлөр жүктөлүүдө…"</string>
