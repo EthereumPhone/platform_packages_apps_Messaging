@@ -16,6 +16,12 @@
 package com.android.messaging.ui.conversation;
 
 import android.content.Context;
+import android.app.Activity;
+import android.graphics.PixelFormat;
+import android.widget.TextView;
+import android.widget.Button;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Rect;
@@ -43,6 +49,7 @@ import android.widget.TextView;
 
 import com.android.messaging.R;
 import com.android.messaging.datamodel.DataModel;
+import com.android.messaging.datamodel.data.ConversationData;
 import com.android.messaging.datamodel.data.ConversationMessageData;
 import com.android.messaging.datamodel.data.MessageData;
 import com.android.messaging.datamodel.data.MessagePartData;
@@ -75,6 +82,13 @@ import com.google.common.base.Predicate;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.provider.ContactsContract.Data;
+import android.provider.ContactsContract;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * The view for a single entry in a conversation.
@@ -110,6 +124,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
     private ViewGroup mMessageMetadataView;
     private ViewGroup mMessageTextAndInfoView;
     private TextView mSimNameView;
+    final Context mContextNew;
 
     private boolean mOneOnOne;
     private ConversationMessageViewHost mHost;
@@ -118,6 +133,7 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
         super(context, attrs);
         // TODO: we should switch to using Binding and DataModel factory methods.
         mData = new ConversationMessageData();
+        mContextNew = context;
     }
 
     @Override
@@ -1018,9 +1034,195 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
         }
     }
 
+    public String extractEthereumAddress(String input) {
+        // Regular expression to match the Ethereum address pattern
+        String regex = "My address is: (0x[a-fA-F0-9]{40})";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(input);
+
+        if (matcher.find()) {
+            // Returns the Ethereum address if found
+            return matcher.group(1);
+        } else {
+            // Returns an empty string if no match is found
+            return "";
+        }
+    }
+
+    public void showOptionToAddAddress(String ethAddress, Context mContext) {
+        if (ethAddress.equals("")) {
+            return;
+        }
+        final android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        final com.android.messaging.ui.ImeDetectFrameLayout view = (com.android.messaging.ui.ImeDetectFrameLayout) ((Activity) mContext).findViewById(R.id.conversation_and_compose_container);
+        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.RGBA_8888
+        );
+        params.gravity = Gravity.CENTER | Gravity.BOTTOM;
+
+
+        androidx.constraintlayout.widget.ConstraintLayout mainView = (androidx.constraintlayout.widget.ConstraintLayout) inflater.inflate(R.layout.enablelayout, null);
+
+
+        Button acceptButton = (Button) mainView.findViewById(R.id.acceptbtn);
+        Button declineButton = (Button) mainView.findViewById(R.id.declinebtn);
+
+        TextView textView = (TextView) mainView.findViewById(R.id.choosemethod);
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                textView.setText("Do you want set the contact's address to \""+ethAddress+"\"?");
+            }
+        });
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // Load the slide-in animation
+                Animation slideInAnimation = AnimationUtils.loadAnimation(mContext, R.anim.slide_in_bottom);
+
+                // Apply the animation to the view
+                mainView.startAnimation(slideInAnimation);
+
+                view.addView(mainView, params);
+            }
+        });   
+
+
+        acceptButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Save eth address in contact
+                long contactId = mData.getSenderContactId();
+
+                saveData15ForContactId(mContext, contactId, ethAddress);
+
+                // Load the slide-out animation
+                Animation slideOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.slide_out_bottom);
+                slideOutAnimation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        // Animation started
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        // Remove the view after the animation ends
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                view.removeView(mainView);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                        // Animation repeats
+                    }
+                });
+
+                // Start the slide-out animation
+                mainView.startAnimation(slideOutAnimation);
+            }
+        });
+        
+        declineButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Load the slide-out animation
+                Animation slideOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.slide_out_bottom);
+                slideOutAnimation.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        // Animation started
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        // Remove the view after the animation ends
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                view.removeView(mainView);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                        // Animation repeats
+                    }
+                });
+
+                // Start the slide-out animation
+                mainView.startAnimation(slideOutAnimation);
+            }
+        });
+
+
+        
+    
+    }
+
+    public boolean saveData15ForContactId(Context context, long contactId, String data15Value) {
+        if (data15Value == null) {
+            return false; // Invalid input
+        }
+    
+        ContentResolver contentResolver = context.getContentResolver();
+        ContentValues values = new ContentValues();
+        
+        // Set the DATA15 value
+        values.put(Data.DATA15, data15Value);
+    
+        // Define the selection criteria using contact ID
+        String selection = Data.CONTACT_ID + "=?";
+        String[] selectionArgs = {String.valueOf(contactId)};
+    
+        // Perform the update
+        int count = contentResolver.update(Data.CONTENT_URI, values, selection, selectionArgs);
+    
+        // Check if the update was successful
+        return count > 0;
+    }    
+    
+
+    public String getDisplayNameForPhoneNumber(Context context, String phoneNumber) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = Uri.withAppendedPath(ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+
+        String[] projection = {Data.DISPLAY_NAME};
+
+        Cursor cursor = contentResolver.query(uri, projection, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int displayNameIndex = cursor.getColumnIndex(Data.DISPLAY_NAME);
+            String displayName = cursor.getString(displayNameIndex);
+            cursor.close();
+            return displayName;
+        } else {
+            return null; // Contact not found
+        }
+    }
+
     @Override
     public void onClick(final View view) {
         final Object tag = view.getTag();
+        String ethAddr = extractEthereumAddress(mMessageTextView.getText().toString());
+        System.out.println("onClickSAVEREAL: "+mMessageTextView.getText() + ": ."+ethAddr);
+        showOptionToAddAddress(
+            ethAddr,
+            getContext()
+        );
         if (tag instanceof MessagePartData) {
             final Rect bounds = UiUtils.getMeasuredBoundsOnScreen(view);
             onAttachmentClick((MessagePartData) tag, bounds, false /* longPress */);

@@ -23,6 +23,7 @@ import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.math.BigInteger
+import android.os.StrictMode
 
 class WalletSDK(
     context: Context,
@@ -171,6 +172,55 @@ class WalletSDK(
         }
     }
 
+    fun sendTransaction(signedTx: String): String {
+        val url = URL(web3RPC)
+
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+
+        connection.setRequestProperty("accept", "application/json")
+        connection.setRequestProperty("content-type", "application/json")
+
+        connection.doOutput = true
+
+        val jsonInputString = """
+    {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "eth_sendRawTransaction",
+    "params": ["$signedTx"]
+    }
+    """.trimIndent()
+
+        val os: OutputStream = connection.outputStream
+        os.write(jsonInputString.toByteArray(Charsets.UTF_8))
+        os.flush()
+
+        val responseCode = connection.responseCode
+
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            val reader = BufferedReader(InputStreamReader(connection.inputStream))
+            var line: String?
+            val response = StringBuilder()
+            while (reader.readLine().also { line = it } != null) {
+                response.append(line)
+            }
+            reader.close()
+
+            connection.disconnect()
+
+            val jsonObj = JSONObject(response.toString())
+            if (jsonObj.has("result")) {
+                return jsonObj.getString("result") // Transaction hash
+            } else {
+                throw Exception("Error: $responseCode")
+            }
+        } else {
+            connection.disconnect()
+            throw Exception("Error: $responseCode")
+        }
+    }
+
     fun hexStringToBigInteger(hexString: String): String {
         // Remove "0x" prefix if present
         val cleanHexString = if (hexString.startsWith("0x")) hexString.substring(2) else hexString
@@ -180,6 +230,9 @@ class WalletSDK(
     }
 
     fun resolveENS(ensName: String): String {
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+
+        StrictMode.setThreadPolicy(policy)
         // Replace with the URL of your Ethereum node's RPC endpoint
         val url = "https://ensdata.net/$ensName"
         println("Sending request to $url")
@@ -205,16 +258,16 @@ class WalletSDK(
         var gasPriceVAL = gasPrice
         println("ETHSENDTEST: Checking proxy $proxy")
         if(proxy != null) {
-            val to = if (toI.startsWith("0x")) {
-                toI
-            } else {
-                resolveENS(toI)
-            }
-            println("ETHSENDTEST: Address: $to")
             // Use system-wallet
             
             println("ETHSENDTEST: GOING INTO COMPLETABLE FUTURE")
             CompletableFuture.runAsync {
+                val to = if (toI.startsWith("0x")) {
+                    toI
+                } else {
+                    resolveENS(toI)
+                }
+                println("ETHSENDTEST: Address: $to")
                 println("ETHSENDTEST: INSIDE COMPLETABLE FUTURE")
                 println("ETHSENDTEST: MY OWN ADDRESS: ${address}")
                 val ethGetTransactionCount = try {
@@ -247,13 +300,22 @@ class WalletSDK(
                         }
                     }
                     Thread.sleep(100)
+                    println("ETHSENDTEST temp-result: ${result}")
                 }
                 if (result == DECLINE) {
+                    println("ETHSENDTEST hasbeendeclined: ${result}")
                     completableFuture.complete(DECLINE)
                 } else {
-                    val txResult = web3j!!.ethSendRawTransaction(result).sendAsync().get()
-                    val txHash = txResult.transactionHash
-                    completableFuture.complete(txHash)
+                    try {
+                        println("ETHSENDTEST result: ${result}")
+                        val txHash = sendTransaction(result)
+                        println("ETHSENDTEST: TxHash: ${txHash}")
+                        completableFuture.complete(txHash)
+                    } catch (e: Exception) {
+                        println("ETHSENDTEST: TxHash: ${e.message}")
+                        e.printStackTrace()
+                    }
+
                 }
             }
             return completableFuture

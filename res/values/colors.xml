@@ -174,4 +174,12 @@
     <color name="fastscroll_preview_text_color">#ffffff</color>
 
     <color name="google_gray">#F1F1F1</color>
+
+
+    <color name="ethOS_blue">#FF24303D</color>
+    <color name="ethOS_blue2">#FF1E2730</color>
+    <color name="ethOS_white">#FAFBFF</color>
+    <color name="ethOS_bg">#191919</color>
+    <color name="ethOS_darkgrey">#242424</color>
+    <color name="ethOS_gray">#CDCDCD</color>
 </resources>

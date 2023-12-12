@@ -775,35 +775,6 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         return name;
     }
 
-    public String getContactData15(Context context, String baseId) {
-        ContentResolver contentResolver = context.getContentResolver();
-        String[] projection = {
-                ContactsContract.CommonDataKinds.Phone.NUMBER,
-                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER,
-                ContactsContract.Data.DATA15,
-                ContactsContract.PhoneLookup.CONTACT_ID,
-        };
-
-        String selection = ContactsContract.PhoneLookup.CONTACT_ID + "=? ";
-        String[] selectionArgs = {baseId};
-
-        Cursor cursor = contentResolver.query(
-                ContactsContract.Data.CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-        );
-        String output = null;
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                int index = cursor.getColumnIndex(ContactsContract.Data.DATA15);
-                output = cursor.getString(index);
-            }
-            cursor.close();
-        }
-        return output;
-    }
 
     public String getDisplayNameForPhoneNumber(Context context, String phoneNumber) {
         ContentResolver contentResolver = context.getContentResolver();
@@ -823,6 +794,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         }
     }
 
+    /** 
     public String getData15ForDisplayName(Context context, String displayName) {
         ContentResolver contentResolver = context.getContentResolver();
 
@@ -846,6 +818,27 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
             return null; // Display name not found or no DATA15 field
         }
     }
+    */
+
+    public String getContactData15(Context context, String contactId) {
+        ContentResolver contentResolver = context.getContentResolver();
+        Uri uri = ContactsContract.Data.CONTENT_URI;
+        String[] projection = { ContactsContract.Data.DATA15 };
+        String selection = ContactsContract.Data.CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+        String[] selectionArgs = { contactId, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE };
+
+        Cursor cursor = contentResolver.query(uri, projection, selection, selectionArgs, null);
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA15));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        return null;
+    }
 
     @Override
     public void onCreateOptionsMenu(final Menu menu, final MenuInflater inflater) {
@@ -857,21 +850,29 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
 
         final ConversationData data = mBinding.getData();
 
-        String phoneNum = data.getParticipantPhoneNumber();
-        if (phoneNum != null) {
-            phoneNum = phoneNum.replace(" ", "");
-        }
+        final Context mContext = getActivity();
+        
 
-        String displayName = getDisplayNameForPhoneNumber(getActivity(), phoneNum);
+        final MenuItem sendEthMenuItem = menu.findItem(R.id.action_send_eth);
 
-        System.out.println("ETH_MESS PHONE NUM: "+phoneNum);
+        new Thread(() -> {
+            String ethAddress = "";
+            while (!data.getParticipantsLoaded()) {}
+            ParticipantData mParticipantData = data.getDefaultSelfParticipant();
+            System.out.println("ETH_MESS PARTI: " + mParticipantData);
+            ethAddress = getContactData15(mContext, Long.toString(mParticipantData.getContactId()));
 
-        String ethAddress = "";
-        if (phoneNum != null && phoneNum.length() > 0) {
-            ethAddress = getData15ForDisplayName(getActivity(), displayName);
-        }
-
-        System.out.println("ETH_MESS Addr: "+ethAddress);
+            System.out.println("ETH_MESS Addr: "+ethAddress);
+            if ((ethAddress != null && ethAddress.length() > 0)) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+                if (!prefs.contains(data.getConversationId()+"eth_address")) {
+                    prefs.edit().putString(data.getConversationId()+"eth_address", checkIfENS(ethAddress)).apply();
+                }
+                sendEthMenuItem.setVisible(true);
+                sendEthMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            }
+        }).start();
+        
 
         // Disable the "people & options" item if we haven't loaded participants yet.
         menu.findItem(R.id.action_people_and_options).setEnabled(data.getParticipantsLoaded());
@@ -887,15 +888,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         menu.findItem(R.id.action_archive).setVisible(!isArchived);
         menu.findItem(R.id.action_unarchive).setVisible(isArchived);
 
-        MenuItem sendEthMenuItem = menu.findItem(R.id.action_send_eth);
-        if ((ethAddress != null && ethAddress.length() > 0)) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            if (!prefs.contains(data.getConversationId()+"eth_address")) {
-                prefs.edit().putString(data.getConversationId()+"eth_address", checkIfENS(ethAddress)).apply();
-            }
-            sendEthMenuItem.setVisible(true);
-            sendEthMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        }
+        
         // Conditionally enable the phone call button.
         final boolean supportCallAction = (PhoneUtils.getDefault().isVoiceCapable() &&
                 data.getParticipantPhoneNumber() != null);
@@ -952,21 +945,15 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
                 return true;
 
             case R.id.action_send_eth:
+
                 final ConversationData data = mBinding.getData();
 
-                String phoneNum = data.getParticipantPhoneNumber();
-                if (phoneNum != null) {
-                    phoneNum = phoneNum.replace(" ", "");
-                }
-
-                String displayName = getDisplayNameForPhoneNumber(getActivity(), phoneNum);
-
-                System.out.println("ETH_MESS PHONE NUM: "+phoneNum);
-
                 String ethAddress = "";
-                if (phoneNum != null && phoneNum.length() > 0) {
-                    ethAddress = getData15ForDisplayName(getActivity(), displayName);
-                }
+                Context mContext = getActivity();
+                ParticipantData mParticipantData = data.getDefaultSelfParticipant();
+                System.out.println("ETH_MESS PARTI: " + mParticipantData);
+                ethAddress = getContactData15(mContext, Long.toString(mParticipantData.getContactId()));
+
 
                 System.out.println("ETH_MESS Addr: "+ethAddress);
                 if (ethAddress != null) {
