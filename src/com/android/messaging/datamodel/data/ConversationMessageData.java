@@ -86,33 +86,26 @@ public class ConversationMessageData {
     public ConversationMessageData() {
     }
 
-
-    public String getContactData15(Context context, String firstName) {
+    public String getContactData15(Context context, String contactId) {
         ContentResolver contentResolver = context.getContentResolver();
-        String[] projection = {ContactsContract.Data.DATA15};
+        Uri uri = ContactsContract.Data.CONTENT_URI;
+        String[] projection = { ContactsContract.Data.DATA15 };
+        String selection = ContactsContract.Data.CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
+        String[] selectionArgs = { contactId, ContactsContract.CommonDataKinds.StructuredName.CONTENT_ITEM_TYPE };
 
-        String selection = ContactsContract.CommonDataKinds.StructuredName.DISPLAY_NAME + "=? ";
-        String[] selectionArgs = {firstName};
-
-        Cursor cursor = contentResolver.query(
-                ContactsContract.Data.CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-        );
-
-        String data15 = null;
+        Cursor cursor = contentResolver.query(uri, projection, selection, selectionArgs, null);
         if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                int data15Index = cursor.getColumnIndex(ContactsContract.Data.DATA15);
-                data15 = cursor.getString(data15Index);
+            try {
+                if (cursor.moveToFirst()) {
+                    return cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA15));
+                }
+            } finally {
+                cursor.close();
             }
-            cursor.close();
         }
-
-        return data15;
+        return null;
     }
+
 
 
     public void bind(final Cursor cursor, final Context context) {
@@ -154,7 +147,7 @@ public class ConversationMessageData {
 
         String ethAddress = null;
         try {
-            ethAddress = getContactData15(context, mSenderFullName);
+            ethAddress = getContactData15(context, Long.toString(mSenderContactId));
         } catch (Exception e) {
             
         }
