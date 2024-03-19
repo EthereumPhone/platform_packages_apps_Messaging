@@ -39,6 +39,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.app.Activity;
+import android.widget.Toast;
 
 import com.android.messaging.Factory;
 import com.android.messaging.R;
@@ -389,7 +391,7 @@ public class ComposeMessageView extends LinearLayout
             String[] parts = message.split(" ");
             if (parts.length == 3 || parts.length == 5) {
                 String amount = parts[1];
-                if (amount.matches("[0-9]+(\\.[0-9]+)?") && parts[2].toLowerCase().equals("eth")) {
+                if (amount.matches("([0-9]+)?(\\.[0-9]+)") && parts[2].toLowerCase().equals("eth")) {
                     // Send the amount to the address
                     WalletSDK walletSDK = null;
                     if (parts.length == 5 && parts[3].toLowerCase().equals("on") && parts[4].toLowerCase().equals("op")) {
@@ -402,11 +404,12 @@ public class ComposeMessageView extends LinearLayout
                     } else {
                         walletSDK = new WalletSDK(getContext(), "https://eth-mainnet.g.alchemy.com/v2/7VRG5CtXPdmq6p65GXf2uz6g_8Xb2oPz");
                         if (walletSDK.getChainId() != 1) {
-                        try {
-                            walletSDK.changeChainid(1).get();
-                        } catch(Exception e) { /* Ignore */}
+                            try {
+                                walletSDK.changeChainid(1).get();
+                            } catch(Exception e) { /* Ignore */}
+                        }
                     }
-                    }
+                    final Context mCont = getContext();
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
                     System.out.println("ETHSENDTEST: Sending " + amount + " ETH to " + prefs.getString(data.getConversationId()+"eth_address", ""));
                     if (!prefs.getString(data.getConversationId()+"eth_address", "").equals("")) {
@@ -416,6 +419,14 @@ public class ComposeMessageView extends LinearLayout
                         sendTx.thenAcceptAsync((txHash) -> {
                             System.out.println("ETHSENDTEST: Sent " + amount + " ETH");
                             System.out.println("ETHSENDTEST: Tx hash: " + txHash);
+                            if (!txHash.equals("decline")) {
+                                ((Activity) mCont).runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(mCont, "eth has been sent 🚀", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
                         });
                     }
                 }

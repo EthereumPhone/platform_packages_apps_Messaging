@@ -747,34 +747,6 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         }
     }
 
-    public String getEthAddressByNumber(Context context, String number) {
-        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(number));
-        String name = "?";
-
-        ContentResolver contentResolver = context.getContentResolver();
-        Cursor contactLookup = contentResolver.query(uri, new String[] {ContactsContract.PhoneLookup.CONTACT_ID,
-                ContactsContract.PhoneLookup.DISPLAY_NAME }, null, null, null);
-
-        try {
-            if (contactLookup != null && contactLookup.getCount() > 0) {
-                contactLookup.moveToNext();
-                int ind = contactLookup.getColumnIndex(ContactsContract.Data.DISPLAY_NAME);
-                if (ind > -1) {
-                    name = contactLookup.getString(ind);
-                }
-                int idIdx = contactLookup.getColumnIndexOrThrow(ContactsContract.PhoneLookup.CONTACT_ID);
-                String contactId = contactLookup.getString(idIdx);
-                return getContactData15(context, contactId);
-            }
-        } finally {
-            if (contactLookup != null) {
-                contactLookup.close();
-            }
-        }
-
-        return name;
-    }
-
 
     public String getDisplayNameForPhoneNumber(Context context, String phoneNumber) {
         ContentResolver contentResolver = context.getContentResolver();
@@ -856,21 +828,25 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
         final MenuItem sendEthMenuItem = menu.findItem(R.id.action_send_eth);
 
         new Thread(() -> {
-            String ethAddress = "";
-            while (!data.getParticipantsLoaded()) {}
-            ParticipantData mParticipantData = data.getDefaultSelfParticipant();
-            System.out.println("ETH_MESS PARTI: " + mParticipantData);
-            ethAddress = getContactData15(mContext, Long.toString(mParticipantData.getContactId()));
+            try {
+                String ethAddress = "";
+                while (!data.getParticipantsLoaded()) {}
+                ParticipantData mParticipantData = data.getParticipants().getOtherParticipant();
+                System.out.println("ETH_MESS PARTI: " + mParticipantData);
+                ethAddress = getContactData15(mContext, Long.toString(mParticipantData.getContactId()));
 
-            System.out.println("ETH_MESS Addr: "+ethAddress);
-            if ((ethAddress != null && ethAddress.length() > 0)) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-                if (!prefs.contains(data.getConversationId()+"eth_address")) {
-                    prefs.edit().putString(data.getConversationId()+"eth_address", checkIfENS(ethAddress)).apply();
+                System.out.println("ETH_MESS Addr: "+ethAddress + " for contactId: "+ Long.toString(mParticipantData.getContactId()));
+                if ((ethAddress != null && ethAddress.length() > 0)) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+                    if (!prefs.contains(data.getConversationId()+"eth_address")) {
+                        prefs.edit().putString(data.getConversationId()+"eth_address", checkIfENS(ethAddress)).apply();
+                    }
+                    sendEthMenuItem.setVisible(true);
+                    sendEthMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
                 }
-                sendEthMenuItem.setVisible(true);
-                sendEthMenuItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-            }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }            
         }).start();
         
 
@@ -950,7 +926,7 @@ public class ConversationFragment extends Fragment implements ConversationDataLi
 
                 String ethAddress = "";
                 Context mContext = getActivity();
-                ParticipantData mParticipantData = data.getDefaultSelfParticipant();
+                ParticipantData mParticipantData = data.getParticipants().getOtherParticipant();
                 System.out.println("ETH_MESS PARTI: " + mParticipantData);
                 ethAddress = getContactData15(mContext, Long.toString(mParticipantData.getContactId()));
 

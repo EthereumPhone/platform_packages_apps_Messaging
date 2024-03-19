@@ -60,10 +60,10 @@
         android:name="com.android.messaging.BugleApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:appCategory="social"
         android:label="@string/app_name"
         android:theme="@style/BugleTheme"
+        android:debuggable="true"
         android:supportsRtl="true">
 
         <!-- Displays a list of conversations -->

@@ -89,6 +89,7 @@ import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import android.content.Intent;
 
 /**
  * The view for a single entry in a conversation.
@@ -1103,35 +1104,50 @@ public class ConversationMessageView extends FrameLayout implements View.OnClick
                 // Save eth address in contact
                 long contactId = mData.getSenderContactId();
 
-                saveData15ForContactId(mContext, contactId, ethAddress);
+                if (contactId != -2) {
+                    saveData15ForContactId(mContext, contactId, ethAddress);
 
-                // Load the slide-out animation
-                Animation slideOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.slide_out_bottom);
-                slideOutAnimation.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                        // Animation started
-                    }
+                    // Load the slide-out animation
+                    Animation slideOutAnimation = AnimationUtils.loadAnimation(mContext, R.anim.slide_out_bottom);
+                    slideOutAnimation.setAnimationListener(new Animation.AnimationListener() {
+                        @Override
+                        public void onAnimationStart(Animation animation) {
+                            // Animation started
+                        }
 
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        // Remove the view after the animation ends
-                        mainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                view.removeView(mainView);
-                            }
-                        });
-                    }
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            // Remove the view after the animation ends
+                            mainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    view.removeView(mainView);
+                                }
+                            });
+                        }
 
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-                        // Animation repeats
-                    }
-                });
+                        @Override
+                        public void onAnimationRepeat(Animation animation) {
+                            // Animation repeats
+                        }
+                    });
 
-                // Start the slide-out animation
-                mainView.startAnimation(slideOutAnimation);
+                    // Start the slide-out animation
+                    mainView.startAnimation(slideOutAnimation);
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+                    intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+                    intent.putExtra("ethAddress", ethAddress);
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            mContext.startActivity(intent);
+                        }
+                    });
+                    
+                }
+
+                
             }
         });
         

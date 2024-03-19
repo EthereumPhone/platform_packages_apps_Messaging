@@ -151,7 +151,7 @@ public class ConversationMessageData {
         } catch (Exception e) {
             
         }
-        System.out.println("ethAddress: " + ethAddress);
+        System.out.println("ethAddress: " + ethAddress + ", for contactId: "+ Long.toString(mSenderContactId));
         if (ethAddress != null) {
             mEthAddress = ethAddress;
         } else {
